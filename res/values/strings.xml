@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AP</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="open_wifi">打开WIFI</string>
+	<string name="close_wifi">关闭WIFI</string>
+	<string name="scan_wifi">连接WIFI</string>
+	<string name="mac_label">输入MAC地址:</string>
+	<string name="portal_time">弹窗时间:0s</string>
+	<string name="count_label">测试次数:</string>
+	<string name="timeout_label">超时时间(s):</string>
+	<string name="remain_count">剩余测试次数:0</string>
+	<string name="succeed_count">成功次数:0</string>
+	<string name="min_time">最小时间(s):0</string>
+	<string name="max_time">最大时间(s):0</string>
+	<string name="average_time">平均时间(s):0</string>
+	<string name="fail_count">失败次数:0</string>
+	<string name="dhcp_fail_count">dhcp失败:0</string>
+	<string name="portal_fail_count">弹窗失败:0</string>
+	<string name="response_fail_count">响应失败:0</string>
+</resources>

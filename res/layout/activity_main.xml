@@ -1,0 +1,217 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.douwan.ap.MainActivity" >
+
+    <!-- <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hello_world" /> -->
+
+   	<Button
+   	    android:id="@+id/open_wifi"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_alignParentBottom="true"
+   	    android:layout_alignParentStart="true"
+   	    android:text="@string/open_wifi" />
+
+   	<Button
+   	    android:id="@+id/scan_wifi"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_alignParentBottom="true"
+   	    android:layout_alignBaseline="@+id/open_wifi"
+   	    android:layout_centerHorizontal="true"
+   	    android:text="@string/scan_wifi" />
+
+   	<Button
+   	    android:id="@+id/close_wifi"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_alignParentBottom="true"
+   	    android:layout_alignParentEnd="true"
+   	    android:text="@string/close_wifi" />
+
+   	<TextView
+   	    android:id="@+id/mac_label"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_alignParentTop="true"
+   	    android:padding="10dp"
+   	    android:textSize="16sp"
+   	    android:text="@string/mac_label"
+   	     />
+   	
+   	<EditText
+ 		android:labelFor="@+id/mac_input"    
+   	    android:id="@+id/mac_input"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_alignTop="@+id/mac_label"
+   	    android:layout_toEndOf="@+id/mac_label"
+   	    android:ems="8"
+   	    android:inputType="text" 
+   	    android:text=""
+   	    android:selectAllOnFocus="true">
+
+   	</EditText>
+
+   	<TextView
+   	    android:id="@+id/count_label"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/mac_label"
+		android:padding="10dp"
+   	    android:textSize="16sp"
+   	    android:text="@string/count_label" />
+   	
+   	<EditText
+   	    android:labelFor="@+id/count_input"
+   	    android:id="@+id/count_input"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_toEndOf="@+id/count_label"
+   	    android:layout_below="@+id/mac_input"
+   	    android:ems="3"
+   	    android:inputType="number"
+   	    android:selectAllOnFocus="true"
+   	    android:text="" >
+
+   	    <requestFocus />
+   	</EditText>
+   	
+   	<TextView
+   	    android:id="@+id/remain_count"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_toEndOf="@+id/count_input"
+   	    android:layout_below="@+id/mac_input"
+		android:padding="10dp"
+   	    android:textSize="16sp"
+   	    android:text="@string/remain_count" />
+   	
+   	<TextView
+   	    android:id="@+id/timeout_label"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/count_label"
+		android:padding="10dp"
+   	    android:textSize="16sp"
+   	    android:text="@string/timeout_label" />
+   	
+   	<EditText
+   	    android:labelFor="@+id/timeout_input"
+   	    android:id="@+id/timeout_input"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_toEndOf="@+id/timeout_label"
+   	    android:layout_below="@+id/count_input"
+   	    android:ems="3"
+   	    android:inputType="number"
+   	    android:selectAllOnFocus="true"
+   	    android:text="" >
+
+   	    <requestFocus />
+   	</EditText>
+   	
+   	<TextView
+   	    android:id="@+id/succeed_count"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/timeout_label"
+		android:padding="10dp"
+   	    android:textSize="16sp"
+   	    android:text="@string/succeed_count"/>
+   	
+   	<TextView
+   	    android:id="@+id/min_time"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/succeed_count"
+   	    android:layout_alignStart="@+id/succeed_count"
+		android:padding="10dp"
+   	    android:textSize="12sp"
+   	    android:text="@string/min_time"/>
+   	
+   	<TextView
+   	    android:id="@+id/max_time"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/succeed_count"
+   	    android:layout_toEndOf="@+id/min_time"
+		android:padding="10dp"
+   	    android:textSize="12sp"
+   	    android:text="@string/max_time"/>
+   	
+   	<TextView
+   	    android:id="@+id/average_time"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/succeed_count"
+   	    android:layout_toEndOf="@+id/max_time"
+		android:padding="10dp"
+   	    android:textSize="12sp"
+   	    android:text="@string/average_time"/>
+   	
+   	<TextView
+   	    android:id="@+id/fail_count"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/min_time"
+		android:padding="10dp"
+   	    android:textSize="16sp"
+   	    android:text="@string/fail_count"/>
+   	<TextView
+   	    android:id="@+id/dhcp_fail_count"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/fail_count"
+		android:padding="10dp"
+   	    android:textSize="12sp"
+   	    android:text="@string/dhcp_fail_count"/>
+   	
+   	<TextView
+   	    android:id="@+id/portal_fail_count"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/fail_count"
+   	    android:layout_toEndOf="@+id/dhcp_fail_count"
+		android:padding="10dp"
+   	    android:textSize="12sp"
+   	    android:text="@string/portal_fail_count"/>
+   	
+   	<TextView
+   	    android:id="@+id/response_fail_count"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_below="@+id/fail_count"
+   	    android:layout_toEndOf="@+id/portal_fail_count"
+		android:padding="10dp"
+   	    android:textSize="12sp"
+   	    android:text="@string/response_fail_count"/>
+   	
+   	<ListView
+  		 android:id="@+id/listView"     
+   		 android:layout_width="wrap_content"  
+   		 android:layout_below="@+id/dhcp_fail_count" 
+   		 android:layout_above="@+id/portal_time"
+   		 android:layout_height="wrap_content"/>
+
+   	<TextView
+   	    android:id="@+id/portal_time"
+   	    android:layout_width="wrap_content"
+   	    android:layout_height="wrap_content"
+   	    android:layout_above="@+id/open_wifi"
+   	    android:layout_alignStart="@+id/open_wifi"
+   	    android:layout_toStartOf="@+id/close_wifi"
+   	    android:padding="10dp"
+   	    
+   	    android:text="@string/portal_time" />
+
+</RelativeLayout>
