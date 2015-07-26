@@ -70,7 +70,7 @@ import android.widget.Toast;
 import com.douwan.ap.Wifi;
 
 public class MainActivity extends Activity {
-	private Wifi wifi = null;	
+	
 	private List<ScanResult> wifi_list = null;
 	
 	private Button open_wifi = null;
@@ -92,8 +92,8 @@ public class MainActivity extends Activity {
 	
 	private String string_mac_input = null;
 	private String string_count_input = null;
-	private String string_timeout_input = null;
-	private String string_remain_count = null;
+	public static String string_timeout_input = null;
+	public static String string_remain_count = null;
 	
 	private int string_succeed_count = 0;
 	private int string_fail_count = 0;
@@ -133,8 +133,6 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		wifi = new Wifi(MainActivity.this);
-		
 		findById();
 		startBindService();
 		receiveBroadcast();
@@ -166,29 +164,42 @@ public class MainActivity extends Activity {
 			
 		});
 		
-		myHandler = new Handler(){
-			@Override
-			public void handleMessage(Message msg) {
-				// TODO Auto-generated method stub
-				switch(msg.what)
-				{
-				case DHCP_FAIL:
-					dhcpFail();
-					break;
-				case CAN_NETWORK:
-					Toast.makeText(MainActivity.this,"测试机已经开网,请重置!", Toast.LENGTH_SHORT).show();
-					break;
-				case UPDATE_LISTVIEW:
-					setList(MainActivity.this,true);
-					break;
-				case PORTAL_FAIL:
-					portalFail();
-					break;
-				}
-				super.handleMessage(msg);
-			}	
-		};
+	}
+	
+	public boolean stop()
+	{
+		boolean flag = false;
+		if(MainActivity.string_remain_count != null && Long.parseLong(MainActivity.string_remain_count) == 0)
+		{
+			Log.i("debug.info", "...........................");
+			unbindService(connect);
+			unregisterReceiver(msgReceiver);
+			flag = true;
+		}
+		return flag;
+	}
+	
+	public void findById()
+	{
+		open_wifi = (Button) findViewById(R.id.open_wifi);
+		close_wifi = (Button) findViewById(R.id.close_wifi);
+		scan_wifi = (Button) findViewById(R.id.scan_wifi);
 		
+		mac_input = (EditText) findViewById(R.id.mac_input);
+		portal_time = (TextView) findViewById(R.id.portal_time);
+		count_input = (EditText) findViewById(R.id.count_input);
+		remain_count = (TextView) findViewById(R.id.remain_count);
+		timeout_input = (EditText) findViewById(R.id.timeout_input);
+		succeed_count = (TextView) findViewById(R.id.succeed_count);
+		min_time = (TextView) findViewById(R.id.min_time);
+		max_time = (TextView) findViewById(R.id.max_time);
+		average_time = (TextView) findViewById(R.id.average_time);
+		fail_count = (TextView) findViewById(R.id.fail_count);
+		dhcp_fail_count = (TextView) findViewById(R.id.dhcp_fail_count);
+		response_fail_count = (TextView) findViewById(R.id.response_fail_count);
+		portal_fail_count = (TextView) findViewById(R.id.portal_fail_count);
+		
+		listView = (ListView) findViewById(R.id.listView);
 	}
 	
 	public  void startBindService()
@@ -220,7 +231,7 @@ public class MainActivity extends Activity {
 	{
 		msgReceiver = new MsgReceiver();  
         IntentFilter intentFilter = new IntentFilter();  
-        intentFilter.addAction("com.douwan.ap.WifiService");  
+        intentFilter.addAction("com.douwan.ap.WifiService");
         registerReceiver(msgReceiver, intentFilter);
 	}
 	
@@ -228,150 +239,73 @@ public class MainActivity extends Activity {
 		  
         @Override  
         public void onReceive(Context context, Intent intent) { 
-        	Message message = new Message();
         	switch(intent.getStringExtra("wifiservice"))
         	{
-        	case "update_listview":
-        	 	Log.i("debug.info", "receive broadCast:update_listview");
-        		setList(MainActivity.this,true);
+        	case "openwifi":
+        		openWifi(intent);
         		break;
-        	case "web_back":
-        		succeedPort(intent);
-    			if(!wifi.wifiManager.isWifiEnabled())
-				{
-					Log.i("debug.info", "WIFI已经关闭，请打开!");
-					Toast.makeText(MainActivity.this,"WIFI已经关闭，请打开!", Toast.LENGTH_SHORT).show();
-					break;
-				}
-				if(isInputComplete() == false)
-				{
-					break;
-				}
-				
-				if(canConnectWifi() == false)
-				{
-					break;
-				}
-    			break;
-        	}
-        	
-        }  
+        	case "closewifi":
+        		closeWifi(intent);
+        		break;
+        	case "updatelistview":
+        		updateListView();
+        		break;
+        	case "scanwifi":
+        		scanWifi(intent);
+        		break;
+        	case "dhcpfail":
+        		dhcpFail();
+        		sendScanWifiBroadcast();
+        		break;
+        	case "cannetwork":
+        		canNetwork(intent);
+        		break;
+        	case "processPortFail":
+        		portalFail();
+        		sendScanWifiBroadcast();
+        		break;
+        	case "processWebBack":
+        		webBack(intent);
+        		sendScanWifiBroadcast();
+				break;
+			default:
+				break;
+        	} 
           
-    }
+        }
+	}
 	
-	public void succeedPort(Intent data)
+	public void openWifi(Intent intent)
 	{
-		new_time = data.getExtras().getLong("time");
-		Log.i("debug.info","弹窗时间: "+(new_time-old_time)+"ms");
-		portal_time.setText("弹窗时间: "+(long)((new_time-old_time)/1000)+"s");
-		
-		string_remain_count = (Long.parseLong(string_remain_count)-1)+"";
-		remain_count.setText("剩余测试次数: "+string_remain_count);
-		
-		isTimeOut((long)((new_time-old_time)/1000));
-		
-		Log.i("debug.info","is equal:"+data.getExtras().getString("redirect").equals("0"));
-		if(data.getExtras().getString("redirect").equals("0") == false)
+		String tag = intent.getExtras().getString("tag");
+		Toast.makeText(MainActivity.this,tag, Toast.LENGTH_SHORT).show();
+	}
+	
+	public void closeWifi(Intent intent)
+	{
+		String tag = intent.getExtras().getString("tag");
+		if(tag.equals("WIFI正在关闭..."))
 		{
-			responseFail();
-			Log.i("debug.info","redirect error.....");
+			setList(MainActivity.this,false);
 		}
+		Toast.makeText(MainActivity.this,tag, Toast.LENGTH_SHORT).show();
 	}
 	
-
-	public void setList(Context context,boolean yes)
+	public void updateListView()
 	{
-		list = new ArrayList<String>();
-		if(yes && wifi.wifiManager.isWifiEnabled())
-		{		
-			alertDialog = new AlertDialog.Builder(context);
-			copy = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
-			wifi.wifiManager.startScan();
-			wifi_list = wifi.wifiManager.getScanResults();
-			
-			while(wifi_list.size() == 0 || wifi_list.size() == 1)
-			{
-				
-				wifi_list = wifi.wifiManager.getScanResults();
-				if(wifi_list.size() != 0 && wifi_list.size() != 1 )
-				{
-					break;
-				}
-			}
-			for(int i=0;i<wifi_list.size();i++)
-			{
-//				Log.i("debug.info","SSID size = " + wifi_list.size());
-//				Log.i("debug.info","SSID " + wifi_list.get(i).BSSID);
-				list.add(wifi_list.get(i).SSID);
-			}
-			arrayAdapter = new ArrayAdapter<String>(context,android.R.layout.simple_list_item_1, list);
-			listView.setAdapter(arrayAdapter);		
-			listView.setOnItemLongClickListener(new OnItemLongClickListener() {
-	
-				@Override
-				public boolean onItemLongClick(AdapterView<?> parent, View view,
-						int position, long id) {
-					// TODO Auto-generated method stub
-					
-					for(int i=0;i<wifi_list.size();i++)
-	        		{
-						if(position == i)
-	            		{
-//	            			setTitle(wifi_list.get(i).BSSID);
-	            			string_copy = wifi_list.get(i).BSSID;
-	            			alertDialog.setTitle("MAC地址").setMessage(
-	            					wifi_list.get(i).BSSID).setPositiveButton("复制", new DialogInterface.OnClickListener() 
-	            					{ 
-	            	                     
-	            	                    @SuppressWarnings("deprecation")
-										@Override 
-	            	                    public void onClick(DialogInterface dialog, int which)
-	            	                    { 
-	            	                        // TODO Auto-generated method stub  
-	            	                    	copy.setText(string_copy);
-	            	                    } 
-	            	                }).show();
-	            			break;
-	            		}
-	        		} 
-					return false;
-				}
-				
-			}
-			);
-		}
-		else {
-			listView = (ListView) findViewById(R.id.listView);
-			listView.setAdapter(new ArrayAdapter<String>(context,android.R.layout.simple_list_item_1,list));
-		}
-		
+		setList(MainActivity.this,true);
 	}
 	
-	public void findById()
+	public void scanWifi(Intent intent)
 	{
-		open_wifi = (Button) findViewById(R.id.open_wifi);
-		close_wifi = (Button) findViewById(R.id.close_wifi);
-		scan_wifi = (Button) findViewById(R.id.scan_wifi);
-		
-		mac_input = (EditText) findViewById(R.id.mac_input);
-		portal_time = (TextView) findViewById(R.id.portal_time);
-		count_input = (EditText) findViewById(R.id.count_input);
-		remain_count = (TextView) findViewById(R.id.remain_count);
-		timeout_input = (EditText) findViewById(R.id.timeout_input);
-		succeed_count = (TextView) findViewById(R.id.succeed_count);
-		min_time = (TextView) findViewById(R.id.min_time);
-		max_time = (TextView) findViewById(R.id.max_time);
-		average_time = (TextView) findViewById(R.id.average_time);
-		fail_count = (TextView) findViewById(R.id.fail_count);
-		dhcp_fail_count = (TextView) findViewById(R.id.dhcp_fail_count);
-		response_fail_count = (TextView) findViewById(R.id.response_fail_count);
-		portal_fail_count = (TextView) findViewById(R.id.portal_fail_count);
-		
-		listView = (ListView) findViewById(R.id.listView);
+		String tag = intent.getExtras().getString("tag");
+		Log.i("debug.info", "tag1:"+tag);
+		Toast.makeText(MainActivity.this,tag, Toast.LENGTH_SHORT).show();
 	}
 	
 	public void dhcpFail()//失败：无法获取ip
 	{
+//		WifiService.wifi.closeWifi();
 		Toast.makeText(MainActivity.this,"IP获取失败，关闭WFIF....", Toast.LENGTH_SHORT).show();
 		string_remain_count = (Long.parseLong(string_remain_count)-1)+"";
 		remain_count.setText("剩余测试次数: "+string_remain_count);
@@ -379,25 +313,28 @@ public class MainActivity extends Activity {
 		fail_count.setText("失败次数:"+string_fail_count);
 		int_dhcp_fail_count = int_dhcp_fail_count+1;
 		dhcp_fail_count.setText("dhcp失败:"+int_dhcp_fail_count);
-//		setList(MainActivity.this, false);
-		wifi.closeWifi();
 	}
 	
-	public void responseFail()
+	public void canNetwork(Intent intent)
 	{
-		Toast.makeText(MainActivity.this,"响应失败....", Toast.LENGTH_SHORT).show();
-		string_remain_count = (Long.parseLong(string_remain_count)-1)+"";
-		remain_count.setText("剩余测试次数: "+string_remain_count);
-		string_fail_count = string_fail_count+1;
-		fail_count.setText("失败次数:"+string_fail_count);
-		int_response_fail_count = int_response_fail_count+1;
-		response_fail_count.setText("响应失败:"+int_response_fail_count);
-//		setList(MainActivity.this, false);
-		wifi.closeWifi();
+		String tag = intent.getExtras().getString("tag");
+		Toast.makeText(MainActivity.this,tag, Toast.LENGTH_SHORT).show();
+	}
+	
+	public boolean startBrows(String string)
+	{
+		Uri uri = Uri.parse(string);
+		boolean result = false;	
+		Intent it = new Intent(MainActivity.this,Web.class);
+		it.putExtra("uri", uri.toString());
+		startActivity(it);
+		result = true;
+		return result;
 	}
 	
 	public void portalFail()
 	{
+//		WifiService.wifi.closeWifi();
 		Toast.makeText(MainActivity.this,"弹窗失败....", Toast.LENGTH_SHORT).show();
 		string_remain_count = (Long.parseLong(string_remain_count)-1)+"";
 		remain_count.setText("剩余测试次数: "+string_remain_count);
@@ -405,59 +342,98 @@ public class MainActivity extends Activity {
 		fail_count.setText("失败次数:"+string_fail_count);
 		int_portal_fail_count = int_portal_fail_count +1;
 		portal_fail_count.setText("弹窗失败:"+int_portal_fail_count);
-//		wifi.closeWifi();
+//		WifiService.wifi.closeWifi();
+	}
+	
+	public void webBack(Intent it)
+	{
+		new_time = it.getExtras().getLong("new_time");
+		old_time = it.getExtras().getLong("old_time");
+		Log.i("debug.info","弹窗时间: "+(new_time-old_time)+"ms");
+		portal_time.setText("弹窗时间: "+(long)((new_time-old_time)/1000)+"s");
+		
+		string_remain_count = (Long.parseLong(string_remain_count)-1)+"";
+		remain_count.setText("剩余测试次数: "+string_remain_count);
+		
+		Log.i("debug.info","is equal:"+it.getExtras().getString("redirect").equals("0"));
+		if(it.getExtras().getString("redirect").equals("0") == false)
+		{
+			responseFail();
+			Log.i("debug.info","redirect error.....");
+			return;
+		}
+		countTime((long)((new_time-old_time)/1000));
+	}
+	
+	public void responseFail()
+	{
+//		WifiService.wifi.closeWifi();
+		Toast.makeText(MainActivity.this,"响应失败....", Toast.LENGTH_SHORT).show();
+		/*string_remain_count = (Long.parseLong(string_remain_count)-1)+"";*/
+		remain_count.setText("剩余测试次数: "+string_remain_count);
+		string_fail_count = string_fail_count+1;
+		fail_count.setText("失败次数:"+string_fail_count);
+		int_response_fail_count = int_response_fail_count+1;
+		response_fail_count.setText("响应失败:"+int_response_fail_count);
+//		WifiService.wifi.closeWifi();
+	}
+	
+	public void countTime(long time)
+	{
+		string_succeed_count = string_succeed_count+1;
+		succeed_count.setText("成功次数:"+string_succeed_count);
+		time_all[string_succeed_count-1] = time;
+		
+		sum_time = 0;
+		query_time(time_all);
+		
+		min_time.setText("最小时间(s): "+long_min_time);
+		max_time.setText("最大时间(s): "+long_max_time);
+		average_time.setText("平均时间(s): "+long_average_time);
+	}
+	
+	public void query_time(long query_time[])
+	{
+		long_min_time = query_time[0];
+		long_max_time = query_time[0];
+		for(int i=0;i<query_time.length;i++)
+		{
+			if(query_time[i] != 0)
+			{
+				if(query_time[i]>=long_max_time)
+				{
+					long_max_time = query_time[i];
+				}
+				else if(query_time[i]<=long_min_time)
+				{
+					long_min_time = query_time[i];
+				}
+				sum_time = sum_time + query_time[i];
+			}
+			
+		}
+		long_average_time = ((float)sum_time/string_succeed_count);
 	}
 
+	
 	public class MyOnClickListener implements OnClickListener
 	{
-
 		@Override
 		public void onClick(View v) {
 			// TODO Auto-generated method stub
 			switch (v.getId()) {
 			case R.id.open_wifi:
-				if(wifi.wifiManager.isWifiEnabled())
-				{
-//					setList(MainActivity.this,true);
-					Toast.makeText(MainActivity.this,"WIFI已经打开，不要点我！", Toast.LENGTH_SHORT).show();
-					break;
-				}
-				wifi.openWifi();
-				while(!wifi.wifiManager.isWifiEnabled());
-				Toast.makeText(MainActivity.this,"WIFI正在打开...", Toast.LENGTH_SHORT).show();
-				portal_time.setText("弹窗时间:0s");
-				
-//				setList(MainActivity.this,true);
+				sendOpenWifiBroadcast();
 				break;
 			case R.id.close_wifi:
-				if(!wifi.wifiManager.isWifiEnabled())
-				{
-					Toast.makeText(MainActivity.this,"WIFI已经关闭，不要点我！", Toast.LENGTH_SHORT).show();
-					break;
-				}
-				setList(MainActivity.this, false);
-//				portal_time.setText("弹窗时间:0s");
-				Toast.makeText(MainActivity.this,"WIFI正在关闭...", Toast.LENGTH_SHORT).show();
-				wifi.closeWifi();
+				sendCloseWifiBroadcast();
 				break;
 			case R.id.scan_wifi:
-				
-				if(!wifi.wifiManager.isWifiEnabled())
-				{
-					Log.i("debug.info", "WIFI已经关闭，请打开!");
-					Toast.makeText(MainActivity.this,"WIFI已经关闭，请打开!", Toast.LENGTH_SHORT).show();
-					break;
-				}
 				if(isInputComplete() == false)
 				{
 					break;
 				}
-				
-				portal_time.setText("弹窗时间:0s");
-				if(canConnectWifi() == false)
-				{
-					break;
-				}
+				sendScanWifiBroadcast();
 			default:
 				break;
 			}
@@ -465,66 +441,29 @@ public class MainActivity extends Activity {
 		
 	}
 	
-	public void sendDhcpFailBroadcast()
+	
+	public void sendOpenWifiBroadcast()
 	{
 		Intent it = new Intent("com.douwan.ap.mainActivity");
-		it.putExtra("mainActivity","dhcpfail");
+		it.putExtra("mainActivity","openwifi");
 		sendBroadcast(it);
 	}
 	
-	public class MyThread implements Runnable
+	public void sendCloseWifiBroadcast()
 	{
-		@Override
-		public void run() {
-			wifi.addNetwork(wifi.CreateWifiInfo(string_mac_input,""));
-//				old_time = SystemClock.uptimeMillis();
-//				while(!wifi.isWifiConnected(MainActivity.this));
-			while(true)
-			{
-				if(wifi.isWifiConnected(MainActivity.this) == 0)
-					break;
-				else if(wifi.isWifiConnected(MainActivity.this) == -1)
-				{
-					break;
-				}
-				else if (wifi.isWifiConnected(MainActivity.this) == 1)
-					continue;
-			}
-			
-			if(wifi.getDhcp())
-			{
-				old_time = SystemClock.uptimeMillis();	
-				sendUrl();
-			}
-			else
-			{
-				Message message = new Message();
-				message.what = DHCP_FAIL;
-				myHandler.sendMessage(message);
-				Log.i("debug.info","ip 获取失败");
-			}
-    
-		}
-		
-		
-		
+		Intent it = new Intent("com.douwan.ap.mainActivity");
+		it.putExtra("mainActivity","closewifi");
+		sendBroadcast(it);
 	}
 	
-	public boolean canConnectWifi()
+	public void sendScanWifiBroadcast()
 	{
-		if(wifi.isMacValid(string_mac_input))
-		{
-			MyThread mythread = new MyThread();
-			Thread t = new Thread(mythread);
-			t.start();
-		}
-		else
-		{
-			Log.i("debug.info","MAC地址无效");
-			return false;
-		}
-		return true;
+		Intent it = new Intent("com.douwan.ap.mainActivity");
+		it.putExtra("mainActivity","scanwifi");
+		it.putExtra("string_mac_input", string_mac_input);
+		sendBroadcast(it);
 	}
+	
 	
 	public boolean isInputComplete()
 	{
@@ -609,199 +548,72 @@ public class MainActivity extends Activity {
 		}		
 		
 	}
-	//启动浏览器
-	public boolean startBrows()
+	
+	public void setList(Context context,boolean yes)
 	{
-		Uri uri = Uri.parse("http://captive.apple.com");
-		boolean result = false;
-		/*Intent it = new Intent();
-		it.setAction("android.intent.action.VIEW");
-		it.setData(uri);
-		
-		startActivity(it);
-		result = true;*/
-		
-		Intent it = new Intent(MainActivity.this,Web.class);
-		it.putExtra("uri", uri.toString());
-		startActivityForResult(it,1);
-		result = true;
-		return result;
-	}
-	//查询弹窗时间(最大，最小，平均)
-	public void query_time(long query_time[])
-	{
-		long_min_time = query_time[0];
-		long_max_time = query_time[0];
-		for(int i=0;i<query_time.length;i++)
-		{
-			if(query_time[i] != 0)
+		list = new ArrayList<String>();
+		if(yes && WifiService.wifi.wifiManager.isWifiEnabled())
+		{		
+			alertDialog = new AlertDialog.Builder(context);
+			copy = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+			WifiService.wifi.wifiManager.startScan();
+			wifi_list = WifiService.wifi.wifiManager.getScanResults();
+			
+			while(wifi_list.size() == 0 || wifi_list.size() == 1)
 			{
-				if(query_time[i]>=long_max_time)
+				
+				wifi_list = WifiService.wifi.wifiManager.getScanResults();
+				if(wifi_list.size() != 0 && wifi_list.size() != 1 )
 				{
-					long_max_time = query_time[i];
+					break;
 				}
-				else if(query_time[i]<=long_min_time)
-				{
-					long_min_time = query_time[i];
-				}
-				sum_time = sum_time + query_time[i];
-//				Log.i("debug.info","time: "+query_time[i]);
 			}
-			
-		}
-//		Log.i("debug.info","s:"+sum_time+" c:"+string_succeed_count);
-		long_average_time = ((float)sum_time/string_succeed_count);
-	}
-	
-	//弹窗超时检测
-	public void isTimeOut(long time)
-	{
-//		if(Long.parseLong(string_timeout_input) >= time)
-		{
-			string_succeed_count = string_succeed_count+1;
-			succeed_count.setText("成功次数:"+string_succeed_count);
-			time_all[string_succeed_count-1] = time;
-			
-			sum_time = 0;
-			query_time(time_all);
-			
-			min_time.setText("最小时间(s): "+long_min_time);
-			max_time.setText("最大时间(s): "+long_max_time);
-			average_time.setText("平均时间(s): "+long_average_time);
-			
-		}
-	}
-	
-	
-	//webView 传递页面finished的时间
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
-		if(resultCode == 10)
-		{
-			new_time = data.getExtras().getLong("time");
-			Log.i("debug.info","弹窗时间: "+(new_time-old_time)+"ms");
-			portal_time.setText("弹窗时间: "+(long)((new_time-old_time)/1000)+"s");
-			
-			string_remain_count = (Long.parseLong(string_remain_count)-1)+"";
-			remain_count.setText("剩余测试次数: "+string_remain_count);
-			
-			isTimeOut((long)((new_time-old_time)/1000));
-			
-			Log.i("debug.info","is equal:"+data.getExtras().getString("redirect").equals("0"));
-			if(data.getExtras().getString("redirect").equals("0") == false)
+			for(int i=0;i<wifi_list.size();i++)
 			{
-				responseFail();
-				Log.i("debug.info","redirect error.....");
+//				Log.i("debug.info","SSID size = " + wifi_list.size());
+//				Log.i("debug.info","SSID " + wifi_list.get(i).BSSID);
+				list.add(wifi_list.get(i).SSID);
 			}
-		}
-		super.onActivityResult(requestCode, resultCode, data);
-	}
-
-	public void sendUrl()
-	{
-		String[] res = {
-//				"http://www.thinkdifferent.us",
-				"http://captive.apple.com"
-//				"http://www.baidu.com"
-				};
-		long old_portal = 0;
-		long new_portal = 0;
-		String line = null;
-		URL url = null;
-		HttpURLConnection connection = null;
-		try {
-			url = new URL(res[0]);
-			
-			try {
-				connection = (HttpURLConnection) url.openConnection();
-				connection.setDoInput(true);
-		        connection.setConnectTimeout((int)(Long.parseLong(string_timeout_input)*1000));
-		        connection.setReadTimeout((int)(Long.parseLong(string_timeout_input)*1000));
-		        connection.setRequestMethod("GET");
-		        connection.setUseCaches(false);
-		        old_portal = SystemClock.uptimeMillis();
-		        connection.connect();
-		        if(connection.getResponseCode() != 200)
-		        {
-		        	throw new IOException("return 200:false");
-		        }
-		        new_portal = SystemClock.uptimeMillis();
-		        BufferedReader reader = new BufferedReader(new InputStreamReader(  
-		                connection.getInputStream(), "utf-8"));
-		        Log.i("debug.info","connect time="+(new_portal - old_portal));
-		        StringBuffer m = new StringBuffer();
-		        while ((line = reader.readLine()) != null) 
-		        {
-		            m.append(line);
-//			            Log.i("debug.info",""+m);
-		        }
-		        reader.close();
-			    Log.i("debug.info",""+m);
-//		        if(m.toString().contains("<HTML><HEAD><TITLE>Success</TITLE></HEAD><BODY>Success</BODY></HTML>"))
-		        if(m.toString().contains("<TITLE>Success</TITLE>"))
-				{
-					Log.i("debug.info","访问IOS网站返回Succeed！");
-//					startBrows(Uri.parse("http://www.baidu.com"));
-					Message message = new Message();
-					message.what = CAN_NETWORK;
-					myHandler.sendMessage(message);
-					return;
-				}
-		        
-		       else if(m.toString().contains("<title>404</title>"))
-		        {
-		        	throw new IOException("return 404");
-		        }
-		        
-		        else
-		        {
-		        	if(startBrows() == true)
-		    		{
-		    			Log.i("debug.info","start brows...");
-		    		}
-		        }
-		        
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				Log.i("debug.info","IOException:"+e.getMessage());
-				Log.i("debug.info","connect time="+(new_portal - old_portal));
-//				Thread.sleep(Long.parseLong(string_timeout_input)*1000);
-				Message message = new Message();
-				message.what = PORTAL_FAIL;
-				myHandler.sendMessage(message);
-				e.printStackTrace();
-			  }
-			finally{
-				  connection.disconnect();
-			  }
-		}
-         catch (MalformedURLException e) {
-		// TODO Auto-generated catch block
-        	 Log.i("debug.info","MalformedURLException");
-        	 Log.i("debug.info","2:"+(new_portal - old_portal));
-        	 e.printStackTrace();
-		}
-	}
+			arrayAdapter = new ArrayAdapter<String>(context,android.R.layout.simple_list_item_1, list);
+			listView.setAdapter(arrayAdapter);		
+			listView.setOnItemLongClickListener(new OnItemLongClickListener() {
 	
-
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.id.action_settings) {
-			return true;
+				@Override
+				public boolean onItemLongClick(AdapterView<?> parent, View view,
+						int position, long id) {
+					// TODO Auto-generated method stub
+					
+					for(int i=0;i<wifi_list.size();i++)
+	        		{
+						if(position == i)
+	            		{
+//	            			setTitle(wifi_list.get(i).BSSID);
+	            			string_copy = wifi_list.get(i).BSSID;
+	            			alertDialog.setTitle("MAC地址").setMessage(
+	            					wifi_list.get(i).BSSID).setPositiveButton("复制", new DialogInterface.OnClickListener() 
+	            					{ 
+	            	                     
+	            	                    @SuppressWarnings("deprecation")
+										@Override 
+	            	                    public void onClick(DialogInterface dialog, int which)
+	            	                    { 
+	            	                        // TODO Auto-generated method stub  
+	            	                    	copy.setText(string_copy);
+	            	                    } 
+	            	                }).show();
+	            			break;
+	            		}
+	        		} 
+					return false;
+				}
+				
+			}
+			);
 		}
-		return super.onOptionsItemSelected(item);
+		else {
+			listView = (ListView) findViewById(R.id.listView);
+			listView.setAdapter(new ArrayAdapter<String>(context,android.R.layout.simple_list_item_1,list));
+		}
+		
 	}
 }

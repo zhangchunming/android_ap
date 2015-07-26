@@ -92,7 +92,7 @@ public class Web extends Activity {
 					num = num +1;
 					Log.i("debug.info","url:"+view.getUrl());
 					Log.i("debug.info","num = "+num);
-					if(num == 3)
+					if(num == 1)
 					{
 						long time1 = SystemClock.uptimeMillis();
 						while(true)
@@ -101,14 +101,17 @@ public class Web extends Activity {
 							if(time2-time1> 5000)
 									break;
 						}
-						Intent it = new Intent("com.douwan.ap.web");
-						it.putExtra("web","web_back");
+						Intent it = new Intent("com.douwan.ap.mainActivity");
+						it.putExtra("mainActivity","web_back");
 						it.putExtra("time",new_time);
 						it.putExtra("redirect", no_redirect);
+						Log.i("debug.info","new_time = "+new_time);
+						Log.i("debug.info","no_redirect = "+no_redirect);
 						sendBroadcast(it);
 						finish();
 					}
 					dialog.dismiss();
+					
 				}
 				@Override
 				public boolean shouldOverrideUrlLoading(WebView view, String url) 

@@ -206,7 +206,7 @@ public class Wifi {
 			return 0;
 		}
 		long new_time = SystemClock.uptimeMillis();
-		if((new_time-old_time) >= 15000)
+		if((new_time-old_time) >= 30*1000)
 		{
 			return -1;
 		}
